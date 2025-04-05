@@ -2,36 +2,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Home Repair Estimator</title>
+    <title>Home Repair Estimator & Timer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         h1 { color: #2c3e50; }
         .container { max-width: 600px; margin: auto; }
-        label, input, textarea { display: block; width: 100%; margin-bottom: 10px; }
-        input, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 15px; background: #2c3e50; color: white; border: none; border-radius: 5px; }
+        label, input { display: block; width: 100%; margin-bottom: 10px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; margin-right: 10px; background: #2c3e50; color: white; border: none; border-radius: 5px; }
+        #log { margin-top: 20px; }
+        .entry { border-bottom: 1px solid #ddd; padding: 10px 0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Home Repair Estimator</h1>
-        <p>This is a starter page for your estimator app. Customize it with your features!</p>
+        <h1>Home Repair Estimator + Task Timer</h1>
+
         <label for="task">Task Description</label>
-        <input type="text" id="task" placeholder="e.g., Fix leaky faucet">
+        <input type="text" id="task" placeholder="e.g., Install footer">
 
         <label for="estimate">Estimated Cost</label>
         <input type="number" id="estimate" placeholder="$">
 
         <button onclick="submitEstimate()">Submit</button>
 
-        <script>
-            function submitEstimate() {
-                const task = document.getElementById('task').value;
-                const cost = document.getElementById('estimate').value;
-                alert("Submitted: " + task + " for $" + cost);
-            }
-        </script>
+        <hr>
+
+        <h2>Task Timer</h2>
+        <button onclick="startTimer()">Start</button>
+        <button onclick="stopTimer()">Stop</button>
+        <div id="timerDisplay">Time Worked: 0s</div>
+
+        <div id="log"></div>
     </div>
+
+    <script>
+        let startTime = null;
+        let timerInterval = null;
+
+        function submitEstimate() {
+            const task = document.getElementById('task').value;
+            const cost = document.getElementById('estimate').value;
+            alert("Submitted: " + task + " for $" + cost);
+        }
+
+        function startTimer() {
+            if (timerInterval) return;
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopTimer() {
+            if (!timerInterval) return;
+            clearInterval(timerInterval);
+            timerInterval = null;
+
+            const task = document.getElementById('task').value || "Unnamed Task";
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById("log").innerHTML += `<div class="entry"><strong>${task}</strong><br>Time worked: ${duration} seconds</div>`;
+            startTime = null;
+            document.getElementById("timerDisplay").innerText = "Time Worked: 0s";
+        }
+
+        function updateTimer() {
+            const seconds = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById("timerDisplay").innerText = "Time Worked: " + seconds + "s";
+        }
+    </script>
 </body>
 </html>
