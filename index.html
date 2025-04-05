@@ -40,14 +40,26 @@
     <script>
         let startTime = null;
         let timerInterval = null;
+        let currentTask = null;
 
         function submitEstimate() {
-            const task = document.getElementById('task').value;
-            const cost = document.getElementById('estimate').value;
-            alert("Submitted: " + task + " for $" + cost);
+            const taskDescription = document.getElementById('task').value;
+            const estimate = document.getElementById('estimate').value;
+            if (!taskDescription || !estimate) {
+                alert('Please enter a task and an estimate.');
+                return;
+            }
+
+            // Create task with description and cost
+            currentTask = { description: taskDescription, cost: estimate, timeWorked: 0 };
+            alert("Task Created: " + taskDescription + " for $" + estimate);
         }
 
         function startTimer() {
+            if (!currentTask) {
+                alert('Please create a task first.');
+                return;
+            }
             if (timerInterval) return;
             startTime = Date.now();
             timerInterval = setInterval(updateTimer, 1000);
@@ -58,11 +70,13 @@
             clearInterval(timerInterval);
             timerInterval = null;
 
-            const task = document.getElementById('task').value || "Unnamed Task";
-            const duration = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById("log").innerHTML += `<div class="entry"><strong>${task}</strong><br>Time worked: ${duration} seconds</div>`;
+            if (currentTask) {
+                const duration = Math.floor((Date.now() - startTime) / 1000);
+                currentTask.timeWorked = duration;
+                document.getElementById("log").innerHTML += `<div class="entry"><strong>${currentTask.description}</strong><br>Estimated Cost: $${currentTask.cost}<br>Time worked: ${currentTask.timeWorked} seconds</div>`;
+                document.getElementById("timerDisplay").innerText = "Time Worked: 0s";
+            }
             startTime = null;
-            document.getElementById("timerDisplay").innerText = "Time Worked: 0s";
         }
 
         function updateTimer() {
