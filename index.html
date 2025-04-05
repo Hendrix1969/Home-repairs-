@@ -15,7 +15,7 @@
         .entry { border-bottom: 1px solid #ddd; padding: 10px 0; }
     </style>
 </head>
-<body>
+<body onload="loadLog()">
     <div class="container">
         <h1>Home Repair Estimator + Task Timer</h1>
 
@@ -34,6 +34,7 @@
         <button onclick="stopTimer()">Stop</button>
         <div id="timerDisplay">Time Worked: 0s</div>
 
+        <h2>Task Log</h2>
         <div id="log"></div>
     </div>
 
@@ -50,7 +51,6 @@
                 return;
             }
 
-            // Create task with description and cost
             currentTask = { description: taskDescription, cost: estimate, timeWorked: 0 };
             alert("Task Created: " + taskDescription + " for $" + estimate);
         }
@@ -70,18 +70,34 @@
             clearInterval(timerInterval);
             timerInterval = null;
 
-            if (currentTask) {
-                const duration = Math.floor((Date.now() - startTime) / 1000);
-                currentTask.timeWorked = duration;
-                document.getElementById("log").innerHTML += `<div class="entry"><strong>${currentTask.description}</strong><br>Estimated Cost: $${currentTask.cost}<br>Time worked: ${currentTask.timeWorked} seconds</div>`;
-                document.getElementById("timerDisplay").innerText = "Time Worked: 0s";
-            }
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            currentTask.timeWorked = duration;
+            logTask(currentTask);
             startTime = null;
+            document.getElementById("timerDisplay").innerText = "Time Worked: 0s";
         }
 
         function updateTimer() {
             const seconds = Math.floor((Date.now() - startTime) / 1000);
             document.getElementById("timerDisplay").innerText = "Time Worked: " + seconds + "s";
+        }
+
+        function logTask(task) {
+            const entryHTML = `<div class="entry"><strong>${task.description}</strong><br>Estimated Cost: $${task.cost}<br>Time worked: ${task.timeWorked} seconds</div>`;
+            document.getElementById("log").innerHTML += entryHTML;
+
+            let savedLogs = JSON.parse(localStorage.getItem("taskLogs")) || [];
+            savedLogs.push(task);
+            localStorage.setItem("taskLogs", JSON.stringify(savedLogs));
+        }
+
+        function loadLog() {
+            const savedLogs = JSON.parse(localStorage.getItem("taskLogs")) || [];
+            const logDiv = document.getElementById("log");
+            savedLogs.forEach(task => {
+                const entryHTML = `<div class="entry"><strong>${task.description}</strong><br>Estimated Cost: $${task.cost}<br>Time worked: ${task.timeWorked} seconds</div>`;
+                logDiv.innerHTML += entryHTML;
+            });
         }
     </script>
 </body>
