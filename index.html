@@ -8,8 +8,8 @@
         body { font-family: Arial, sans-serif; padding: 20px; }
         h1 { color: #2c3e50; }
         .container { max-width: 600px; margin: auto; }
-        label, input, textarea { display: block; width: 100%; margin-bottom: 10px; }
-        input, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        label, input, textarea, select { display: block; width: 100%; margin-bottom: 10px; }
+        input, textarea, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         button { padding: 10px 15px; margin-right: 10px; background: #2c3e50; color: white; border: none; border-radius: 5px; }
         .entry { border-bottom: 1px solid #ddd; padding: 10px 0; }
         .task-actions { margin-top: 10px; }
@@ -20,6 +20,12 @@
 <body onload="loadTasks()">
     <div class="container">
         <h1>Home Repair Estimator + Task Manager</h1>
+
+        <label for="preset">Use a Saved Estimate</label>
+        <select id="preset" onchange="loadPreset()">
+            <option value="">-- Select an Estimate --</option>
+            <option value="concrete_footer">Concrete Footer</option>
+        </select>
 
         <label for="task">Task Description</label>
         <input type="text" id="task" placeholder="e.g., Concrete Footer">
@@ -40,6 +46,21 @@
 
     <script>
         let taskList = [];
+
+        function loadPreset() {
+            const preset = document.getElementById('preset').value;
+            if (preset === 'concrete_footer') {
+                document.getElementById('task').value = "Install Concrete Footer";
+                document.getElementById('estimate').value = 1200;
+                document.getElementById('scope').value =
+`- Excavate 16" wide trench
+- Place #4 rebar 16" OC
+- Form with 2x6 lumber
+- Pour 3500 psi concrete
+- Strip and remove forms
+- Clean work area`;
+            }
+        }
 
         function submitEstimate() {
             const taskDescription = document.getElementById('task').value;
@@ -66,6 +87,7 @@
             document.getElementById('task').value = '';
             document.getElementById('estimate').value = '';
             document.getElementById('scope').value = '';
+            document.getElementById('preset').value = '';
         }
 
         function startTask(id) {
@@ -92,11 +114,7 @@
 
         function toggleScope(id) {
             const scopeDiv = document.getElementById('scope-' + id);
-            if (scopeDiv.style.display === 'none') {
-                scopeDiv.style.display = 'block';
-            } else {
-                scopeDiv.style.display = 'none';
-            }
+            scopeDiv.style.display = scopeDiv.style.display === 'none' ? 'block' : 'none';
         }
 
         function renderTasks() {
