@@ -2,102 +2,134 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Home Repair Estimator & Timer</title>
+    <title>Home Repair Estimator & Task Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         h1 { color: #2c3e50; }
         .container { max-width: 600px; margin: auto; }
-        label, input { display: block; width: 100%; margin-bottom: 10px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        label, input, textarea { display: block; width: 100%; margin-bottom: 10px; }
+        input, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         button { padding: 10px 15px; margin-right: 10px; background: #2c3e50; color: white; border: none; border-radius: 5px; }
-        #log { margin-top: 20px; }
         .entry { border-bottom: 1px solid #ddd; padding: 10px 0; }
+        .task-actions { margin-top: 10px; }
+        .scope { margin-top: 10px; display: none; white-space: pre-wrap; background: #f9f9f9; padding: 10px; border-radius: 5px; }
+        .show-scope-btn { margin-top: 5px; background: #555; }
     </style>
 </head>
-<body onload="loadLog()">
+<body onload="loadTasks()">
     <div class="container">
-        <h1>Home Repair Estimator + Task Timer</h1>
+        <h1>Home Repair Estimator + Task Manager</h1>
 
         <label for="task">Task Description</label>
-        <input type="text" id="task" placeholder="e.g., Install footer">
+        <input type="text" id="task" placeholder="e.g., Concrete Footer">
 
         <label for="estimate">Estimated Cost</label>
         <input type="number" id="estimate" placeholder="$">
 
+        <label for="scope">Scope of Work</label>
+        <textarea id="scope" placeholder="Describe the work to be done..."></textarea>
+
         <button onclick="submitEstimate()">Submit</button>
 
         <hr>
-
-        <h2>Task Timer</h2>
-        <button onclick="startTimer()">Start</button>
-        <button onclick="stopTimer()">Stop</button>
-        <div id="timerDisplay">Time Worked: 0s</div>
 
         <h2>Task Log</h2>
         <div id="log"></div>
     </div>
 
     <script>
-        let startTime = null;
-        let timerInterval = null;
-        let currentTask = null;
+        let taskList = [];
 
         function submitEstimate() {
             const taskDescription = document.getElementById('task').value;
             const estimate = document.getElementById('estimate').value;
+            const scopeText = document.getElementById('scope').value;
+
             if (!taskDescription || !estimate) {
                 alert('Please enter a task and an estimate.');
                 return;
             }
 
-            currentTask = { description: taskDescription, cost: estimate, timeWorked: 0 };
-            alert("Task Created: " + taskDescription + " for $" + estimate);
+            const task = {
+                id: Date.now(),
+                description: taskDescription,
+                cost: estimate,
+                scope: scopeText,
+                timeWorked: 0,
+                isRunning: false,
+                startTime: null
+            };
+            taskList.push(task);
+            saveTasks();
+            renderTasks();
+            document.getElementById('task').value = '';
+            document.getElementById('estimate').value = '';
+            document.getElementById('scope').value = '';
         }
 
-        function startTimer() {
-            if (!currentTask) {
-                alert('Please create a task first.');
-                return;
+        function startTask(id) {
+            const task = taskList.find(t => t.id === id);
+            if (task && !task.isRunning) {
+                task.isRunning = true;
+                task.startTime = Date.now();
+                saveTasks();
+                renderTasks();
             }
-            if (timerInterval) return;
-            startTime = Date.now();
-            timerInterval = setInterval(updateTimer, 1000);
         }
 
-        function stopTimer() {
-            if (!timerInterval) return;
-            clearInterval(timerInterval);
-            timerInterval = null;
-
-            const duration = Math.floor((Date.now() - startTime) / 1000);
-            currentTask.timeWorked = duration;
-            logTask(currentTask);
-            startTime = null;
-            document.getElementById("timerDisplay").innerText = "Time Worked: 0s";
+        function stopTask(id) {
+            const task = taskList.find(t => t.id === id);
+            if (task && task.isRunning) {
+                const duration = Math.floor((Date.now() - task.startTime) / 1000);
+                task.timeWorked += duration;
+                task.isRunning = false;
+                task.startTime = null;
+                saveTasks();
+                renderTasks();
+            }
         }
 
-        function updateTimer() {
-            const seconds = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById("timerDisplay").innerText = "Time Worked: " + seconds + "s";
+        function toggleScope(id) {
+            const scopeDiv = document.getElementById('scope-' + id);
+            if (scopeDiv.style.display === 'none') {
+                scopeDiv.style.display = 'block';
+            } else {
+                scopeDiv.style.display = 'none';
+            }
         }
 
-        function logTask(task) {
-            const entryHTML = `<div class="entry"><strong>${task.description}</strong><br>Estimated Cost: $${task.cost}<br>Time worked: ${task.timeWorked} seconds</div>`;
-            document.getElementById("log").innerHTML += entryHTML;
-
-            let savedLogs = JSON.parse(localStorage.getItem("taskLogs")) || [];
-            savedLogs.push(task);
-            localStorage.setItem("taskLogs", JSON.stringify(savedLogs));
-        }
-
-        function loadLog() {
-            const savedLogs = JSON.parse(localStorage.getItem("taskLogs")) || [];
-            const logDiv = document.getElementById("log");
-            savedLogs.forEach(task => {
-                const entryHTML = `<div class="entry"><strong>${task.description}</strong><br>Estimated Cost: $${task.cost}<br>Time worked: ${task.timeWorked} seconds</div>`;
-                logDiv.innerHTML += entryHTML;
+        function renderTasks() {
+            const log = document.getElementById("log");
+            log.innerHTML = '';
+            taskList.forEach(task => {
+                const taskHTML = `
+                    <div class="entry">
+                        <strong>${task.description}</strong><br>
+                        Estimated Cost: $${task.cost}<br>
+                        Time Worked: ${task.timeWorked} seconds
+                        <div class="task-actions">
+                            <button onclick="startTask(${task.id})">Start</button>
+                            <button onclick="stopTask(${task.id})">Stop</button>
+                            <button class="show-scope-btn" onclick="toggleScope(${task.id})">View Scope</button>
+                        </div>
+                        <div class="scope" id="scope-${task.id}">${task.scope || "No scope provided."}</div>
+                    </div>
+                `;
+                log.innerHTML += taskHTML;
             });
+        }
+
+        function saveTasks() {
+            localStorage.setItem("taskList", JSON.stringify(taskList));
+        }
+
+        function loadTasks() {
+            const saved = localStorage.getItem("taskList");
+            if (saved) {
+                taskList = JSON.parse(saved);
+                renderTasks();
+            }
         }
     </script>
 </body>
